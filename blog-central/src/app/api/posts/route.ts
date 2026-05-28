@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '../../../lib/db';
 
-// GET /api/posts?tenant_id=X — lista posts de um tenant específico
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -12,11 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Parâmetro tenant_id é obrigatório' }, { status: 400 });
     }
 
-    const posts = db.prepare(
-      'SELECT * FROM posts WHERE tenant_id = ? ORDER BY created_at DESC'
-    ).all(Number(tenantId));
+    const result = await db.execute({
+      sql: 'SELECT * FROM posts WHERE tenant_id = ? ORDER BY created_at DESC',
+      args: [Number(tenantId)],
+    });
 
-    return NextResponse.json(posts, { status: 200 });
+    return NextResponse.json(result.rows, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

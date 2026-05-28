@@ -1,51 +1,57 @@
 // src/lib/db.ts
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createClient } from '@libsql/client';
 
-const dbPath = path.join(process.cwd(), 'data', 'blog-central.db');
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
 
-// Garante que a pasta data existe (em dev local; na Vercel não persiste, mas para MVP é ok)
-const fs = require('fs');
-const dir = path.dirname(dbPath);
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+if (!url || !authToken) {
+  throw new Error('TURSO_DATABASE_URL e TURSO_AUTH_TOKEN são obrigatórios. Verifique o arquivo .env.local');
 }
 
-const db = new Database(dbPath);
+const db = createClient({
+  url,
+  authToken,
+});
 
-// Habilita WAL para melhor performance em leitura/escrita concorrente (opcional)
-db.pragma('journal_mode = WAL');
+// Cria as tabelas se não existirem (executado uma vez na primeira conexão)
+async function initializeDatabase() {
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS tenants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        slug TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        primary_color TEXT NOT NULL DEFAULT '#3B82F6',
+        secondary_color TEXT NOT NULL DEFAULT '#1E3A5F',
+        sections TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+    `);
 
-// Criação da tabela tenants
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tenants (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    primary_color TEXT NOT NULL DEFAULT '#3B82F6',
-    secondary_color TEXT NOT NULL DEFAULT '#1E3A5F',
-    sections TEXT DEFAULT '[]',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
-  );
-`);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        category TEXT DEFAULT 'general',
+        status TEXT DEFAULT 'draft',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+        UNIQUE(tenant_id, slug)
+      );
+    `);
+    console.log('✓ Tabelas criadas/verificadas no Turso');
+  } catch (error) {
+    console.error('Erro ao inicializar banco de dados:', error);
+    throw error;
+  }
+}
 
-// Criação da tabela posts
-db.exec(`
-  CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    tenant_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    slug TEXT NOT NULL,
-    content TEXT NOT NULL,
-    image_url TEXT,
-    category TEXT DEFAULT 'general',
-    status TEXT DEFAULT 'draft',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    UNIQUE(tenant_id, slug)
-  );
-`);
+initializeDatabase().catch(console.error);
 
 export default db;

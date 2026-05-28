@@ -22,20 +22,26 @@ interface Post {
   created_at: string;
 }
 
-export default async function BlogPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function BlogPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
 
   // Busca o tenant pelo slug
-  const tenant = db.prepare('SELECT * FROM tenants WHERE slug = ?').get(slug) as Tenant | undefined;
+  const tenantResult = await db.execute({
+    sql: 'SELECT * FROM tenants WHERE slug = ?',
+    args: [slug],
+  });
+  const tenant = tenantResult.rows[0] as unknown as Tenant | undefined;
 
   if (!tenant) {
     notFound();
   }
 
   // Busca os posts publicados do tenant
-  const posts = db.prepare(
-    'SELECT * FROM posts WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC'
-  ).all(tenant.id, 'published') as Post[];
+  const postsResult = await db.execute({
+    sql: 'SELECT * FROM posts WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC',
+    args: [tenant.id, 'published'],
+  });
+  const posts = postsResult.rows as unknown as Post[];
 
   // Parse das seções (array de strings com nomes de seção)
   let sections: string[] = [];

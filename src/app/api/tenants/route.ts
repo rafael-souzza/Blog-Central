@@ -4,8 +4,12 @@ import db from '../../../lib/db';
 
 export async function GET() {
   try {
-    const result = await db.execute('SELECT * FROM tenants ORDER BY created_at DESC');
-    return NextResponse.json(result.rows, { status: 200 });
+    // Busca todos os tenants
+    const tenants = db
+      .prepare('SELECT * FROM tenants ORDER BY created_at DESC')
+      .all();
+
+    return NextResponse.json(tenants, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -17,31 +21,35 @@ export async function POST(request: NextRequest) {
     const { slug, name, primary_color, secondary_color, sections } = body;
 
     if (!slug || !name) {
-      return NextResponse.json({ error: 'Slug e name são obrigatórios' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Slug e name são obrigatórios' },
+        { status: 400 }
+      );
     }
 
-    const result = await db.execute({
-      sql: `INSERT INTO tenants (slug, name, primary_color, secondary_color, sections) VALUES (?, ?, ?, ?, ?)`,
-      args: [
+    // Insere novo tenant
+    const insert = db
+      .prepare(
+        `INSERT INTO tenants (slug, name, primary_color, secondary_color, sections)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(
         slug,
         name,
         primary_color || '#3B82F6',
         secondary_color || '#1E3A5F',
-        typeof sections === 'string' ? sections : JSON.stringify(sections || []),
-      ],
-    });
+        typeof sections === 'string' ? sections : JSON.stringify(sections || [])
+      );
 
-    // lastInsertRowid pode ser bigint | undefined; tratamos isso
-    if (result.lastInsertRowid === undefined || result.lastInsertRowid === null) {
+    if (!insert.lastInsertRowid) {
       throw new Error('Falha ao obter ID do tenant inserido');
     }
 
-    const newTenantResult = await db.execute({
-      sql: 'SELECT * FROM tenants WHERE id = ?',
-      args: [Number(result.lastInsertRowid)],
-    });
+    // Busca o tenant recém-criado
+    const newTenant = db
+      .prepare('SELECT * FROM tenants WHERE id = ?')
+      .get(Number(insert.lastInsertRowid));
 
-    const newTenant = newTenantResult.rows[0];
     return NextResponse.json(newTenant, { status: 201 });
   } catch (error: any) {
     if (error.message?.includes('UNIQUE constraint failed')) {

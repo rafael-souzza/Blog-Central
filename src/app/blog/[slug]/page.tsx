@@ -26,22 +26,20 @@ export default async function BlogPage({ params }: { params: { slug: string } })
   const { slug } = params;
 
   // Busca o tenant pelo slug
-  const tenantResult = await db.execute({
-    sql: 'SELECT * FROM tenants WHERE slug = ?',
-    args: [slug],
-  });
-  const tenant = tenantResult.rows[0] as unknown as Tenant | undefined;
+  const tenant = db
+    .prepare('SELECT * FROM tenants WHERE slug = ?')
+    .get(slug) as Tenant | undefined;
 
   if (!tenant) {
     notFound();
   }
 
   // Busca os posts publicados do tenant
-  const postsResult = await db.execute({
-    sql: 'SELECT * FROM posts WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC',
-    args: [tenant.id, 'published'],
-  });
-  const posts = postsResult.rows as unknown as Post[];
+  const posts = db
+    .prepare(
+      'SELECT * FROM posts WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC'
+    )
+    .all(tenant.id, 'published') as Post[];
 
   // Parse das seções (array de strings com nomes de seção)
   let sections: string[] = [];
@@ -55,10 +53,25 @@ export default async function BlogPage({ params }: { params: { slug: string } })
   const displaySections = sections.length > 0 ? sections : ['posts', 'about'];
 
   return (
-    <div style={{ '--primary': tenant.primary_color, '--secondary': tenant.secondary_color } as React.CSSProperties}>
+    <div
+      style={
+        {
+          '--primary': tenant.primary_color,
+          '--secondary': tenant.secondary_color,
+        } as React.CSSProperties
+      }
+    >
       {/* Header */}
-      <header style={{ backgroundColor: 'var(--primary)', padding: '2rem', color: '#fff' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>{tenant.name}</h1>
+      <header
+        style={{
+          backgroundColor: 'var(--primary)',
+          padding: '2rem',
+          color: '#fff',
+        }}
+      >
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
+          {tenant.name}
+        </h1>
         <p style={{ margin: '0.5rem 0 0', opacity: 0.8 }}>Bem-vindo ao blog</p>
       </header>
 
@@ -67,7 +80,13 @@ export default async function BlogPage({ params }: { params: { slug: string } })
           if (section === 'posts') {
             return (
               <section key="posts" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ color: 'var(--secondary)', borderBottom: '2px solid var(--primary)', paddingBottom: '0.5rem' }}>
+                <h2
+                  style={{
+                    color: 'var(--secondary)',
+                    borderBottom: '2px solid var(--primary)',
+                    paddingBottom: '0.5rem',
+                  }}
+                >
                   Posts
                 </h2>
                 {posts.length === 0 ? (
@@ -75,15 +94,48 @@ export default async function BlogPage({ params }: { params: { slug: string } })
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {posts.map((post) => (
-                      <article key={post.id} style={{ border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1rem' }}>
+                      <article
+                        key={post.id}
+                        style={{
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '0.5rem',
+                          padding: '1rem',
+                        }}
+                      >
                         {post.image_url && (
-                          <img src={post.image_url} alt={post.title} style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '0.25rem', marginBottom: '0.5rem' }} />
+                          <img
+                            src={post.image_url}
+                            alt={post.title}
+                            style={{
+                              width: '100%',
+                              maxHeight: '200px',
+                              objectFit: 'cover',
+                              borderRadius: '0.25rem',
+                              marginBottom: '0.5rem',
+                            }}
+                          />
                         )}
-                        <h3 style={{ margin: '0 0 0.5rem', color: 'var(--secondary)' }}>{post.title}</h3>
-                        <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0 0 0.5rem' }}>
-                          {post.category} · {new Date(post.created_at).toLocaleDateString('pt-BR')}
+                        <h3
+                          style={{
+                            margin: '0 0 0.5rem',
+                            color: 'var(--secondary)',
+                          }}
+                        >
+                          {post.title}
+                        </h3>
+                        <p
+                          style={{
+                            color: '#6b7280',
+                            fontSize: '0.875rem',
+                            margin: '0 0 0.5rem',
+                          }}
+                        >
+                          {post.category} ·{' '}
+                          {new Date(post.created_at).toLocaleDateString('pt-BR')}
                         </p>
-                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{post.content}</div>
+                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                          {post.content}
+                        </div>
                       </article>
                     ))}
                   </div>
@@ -95,10 +147,19 @@ export default async function BlogPage({ params }: { params: { slug: string } })
           if (section === 'about') {
             return (
               <section key="about" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ color: 'var(--secondary)', borderBottom: '2px solid var(--primary)', paddingBottom: '0.5rem' }}>
+                <h2
+                  style={{
+                    color: 'var(--secondary)',
+                    borderBottom: '2px solid var(--primary)',
+                    paddingBottom: '0.5rem',
+                  }}
+                >
                   Sobre
                 </h2>
-                <p>Este é o blog <strong>{tenant.name}</strong>. Aqui você encontra conteúdo sobre diversos temas.</p>
+                <p>
+                  Este é o blog <strong>{tenant.name}</strong>. Aqui você encontra
+                  conteúdo sobre diversos temas.
+                </p>
               </section>
             );
           }
@@ -106,7 +167,14 @@ export default async function BlogPage({ params }: { params: { slug: string } })
           // Seção customizada genérica (placeholder)
           return (
             <section key={section} style={{ marginBottom: '2rem' }}>
-              <h2 style={{ color: 'var(--secondary)', borderBottom: '2px solid var(--primary)', paddingBottom: '0.5rem', textTransform: 'capitalize' }}>
+              <h2
+                style={{
+                  color: 'var(--secondary)',
+                  borderBottom: '2px solid var(--primary)',
+                  paddingBottom: '0.5rem',
+                  textTransform: 'capitalize',
+                }}
+              >
                 {section}
               </h2>
               <p>Conteúdo da seção &quot;{section}&quot; em breve.</p>
@@ -116,8 +184,18 @@ export default async function BlogPage({ params }: { params: { slug: string } })
       </main>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: 'var(--secondary)', padding: '1rem', color: '#fff', textAlign: 'center', marginTop: '2rem' }}>
-        <p style={{ margin: 0, fontSize: '0.875rem' }}>© {new Date().getFullYear()} {tenant.name} — Powered by Blog Central</p>
+      <footer
+        style={{
+          backgroundColor: 'var(--secondary)',
+          padding: '1rem',
+          color: '#fff',
+          textAlign: 'center',
+          marginTop: '2rem',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: '0.875rem' }}>
+          © {new Date().getFullYear()} {tenant.name} — Powered by Blog Central
+        </p>
       </footer>
     </div>
   );

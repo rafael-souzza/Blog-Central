@@ -1,16 +1,11 @@
-import { createClient } from '@libsql/client';
+import Database from "better-sqlite3";
 
-const url = process.env.TURSO_DATABASE_URL;
-const authToken = process.env.TURSO_AUTH_TOKEN;
+// Cria/abre o banco local
+const db = new Database("blog.db");
 
-if (!url || !authToken) {
-  throw new Error('TURSO_DATABASE_URL e TURSO_AUTH_TOKEN são obrigatórios. Verifique o arquivo .env.local');
-}
-
-const db = createClient({ url, authToken });
-
-async function initializeDatabase() {
-  await db.execute(`
+// Inicializa tabelas se não existirem
+function initializeDatabase() {
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS tenants (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       slug TEXT NOT NULL UNIQUE,
@@ -20,10 +15,10 @@ async function initializeDatabase() {
       sections TEXT DEFAULT '[]',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
-    );
-  `);
+    )
+  `).run();
 
-  await db.execute(`
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tenant_id INTEGER NOT NULL,
@@ -37,11 +32,12 @@ async function initializeDatabase() {
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
       UNIQUE(tenant_id, slug)
-    );
-  `);
-  console.log('✓ Tabelas criadas/verificadas no Turso');
+    )
+  `).run();
+
+  console.log("✓ Tabelas criadas/verificadas no SQLite local");
 }
 
-initializeDatabase().catch(console.error);
+initializeDatabase();
 
 export default db;

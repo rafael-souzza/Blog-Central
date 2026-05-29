@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import db from "../../../../lib/db";
 
@@ -22,21 +23,40 @@ export default async function PostPage({
   const { slug, postSlug } = await params;
 
   const tenantRow = await db
-    .prepare("SELECT id FROM tenants WHERE slug = ?")
+    .prepare("SELECT id, name FROM tenants WHERE slug = ?")
     .get(slug);
-  const tenant = tenantRow as unknown as { id: number } | undefined;
+  const tenant = tenantRow as unknown as { id: number; name: string } | undefined;
   if (!tenant) return notFound();
 
   const postRow = await db
-    .prepare("SELECT * FROM posts WHERE tenant_id = ? AND slug = ?")
+    .prepare("SELECT * FROM posts WHERE tenant_id = ? AND slug = ? AND status = 'published'")
     .get(tenant.id, postSlug);
   const post = postRow as unknown as Post | undefined;
   if (!post) return notFound();
 
   return (
     <article>
-      <h1>{post.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: post.content }} />
+      <Link
+        href={`/blog/${slug}`}
+        className="text-blue-600 hover:underline text-sm mb-4 inline-block"
+      >
+        ← Voltar para {tenant.name}
+      </Link>
+
+      <p className="text-sm text-gray-400 mb-2">
+        {new Date(post.created_at + "Z").toLocaleDateString("pt-BR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      </p>
+
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">{post.title}</h1>
+
+      <div
+        className="prose max-w-none text-gray-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: post.content }}
+      />
     </article>
   );
 }

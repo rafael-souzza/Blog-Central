@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <pre id="resultado">Enviando...</pre>
+  <script>
+    fetch('/api/posts/1', {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('resultado').textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+      document.getElementById('resultado').textContent = 'Erro: ' + err;
+    });
+  </script>
+</body>
+</html>

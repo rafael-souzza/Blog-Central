@@ -1,12 +1,10 @@
-// src/app/api/tenants/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import db from '../../../lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import db from "../../../lib/db";
 
 export async function GET() {
   try {
-    // Busca todos os tenants
-    const tenants = db
-      .prepare('SELECT * FROM tenants ORDER BY created_at DESC')
+    const tenants = await db
+      .prepare("SELECT * FROM tenants ORDER BY created_at DESC")
       .all();
 
     return NextResponse.json(tenants, { status: 200 });
@@ -22,13 +20,12 @@ export async function POST(request: NextRequest) {
 
     if (!slug || !name) {
       return NextResponse.json(
-        { error: 'Slug e name são obrigatórios' },
+        { error: "Slug e name são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Insere novo tenant
-    const insert = db
+    const insert = await db
       .prepare(
         `INSERT INTO tenants (slug, name, primary_color, secondary_color, sections)
          VALUES (?, ?, ?, ?, ?)`
@@ -36,24 +33,23 @@ export async function POST(request: NextRequest) {
       .run(
         slug,
         name,
-        primary_color || '#3B82F6',
-        secondary_color || '#1E3A5F',
-        typeof sections === 'string' ? sections : JSON.stringify(sections || [])
+        primary_color || "#3B82F6",
+        secondary_color || "#1E3A5F",
+        typeof sections === "string" ? sections : JSON.stringify(sections || [])
       );
 
     if (!insert.lastInsertRowid) {
-      throw new Error('Falha ao obter ID do tenant inserido');
+      throw new Error("Falha ao obter ID do tenant inserido");
     }
 
-    // Busca o tenant recém-criado
-    const newTenant = db
-      .prepare('SELECT * FROM tenants WHERE id = ?')
+    const newTenant = await db
+      .prepare("SELECT * FROM tenants WHERE id = ?")
       .get(Number(insert.lastInsertRowid));
 
     return NextResponse.json(newTenant, { status: 201 });
   } catch (error: any) {
-    if (error.message?.includes('UNIQUE constraint failed')) {
-      return NextResponse.json({ error: 'Slug já existe' }, { status: 409 });
+    if (error.message?.includes("UNIQUE constraint failed")) {
+      return NextResponse.json({ error: "Slug já existe" }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

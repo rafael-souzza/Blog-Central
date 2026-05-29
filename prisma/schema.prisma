@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // ou "mysql" / "sqlite" dependendo do seu banco
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id     Int    @id @default(autoincrement())
+  name   String
+  slug   String @unique
+  posts  Post[]   // relação com Post
+}
+
+model Post {
+  id       Int     @id @default(autoincrement())
+  title    String
+  content  String
+  tenantId Int
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+}

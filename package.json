@@ -11,12 +11,10 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
-    "@prisma/client": "^5.15.0",
     "better-sqlite3": "^12.10.0",
     "formidable": "^3.5.4",
     "next": "^16.2.6",
     "next-auth": "^4.24.14",
-    "prisma": "^5.15.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

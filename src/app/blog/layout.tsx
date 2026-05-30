@@ -57,14 +57,16 @@ export default async function BlogLayout({
       <body style={{ fontFamily, backgroundColor: "#f5f5f5", margin: 0 }}>
         {/* Top Bar */}
         <div style={{ backgroundColor: "#f0f0f0", borderBottom: "1px solid #ddd" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 10px", display: "flex", justifyContent: "flex-end", gap: 20 }}>
-            <Link href="/" style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Início</Link>
-            <Link href={slug ? `/blog/${slug}` : "/"} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Blog</Link>
-            {sections.map((s: string) => (
-              <Link key={s} href={`/blog/${slug}?section=${encodeURIComponent(s)}`} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>
-                {s}
-              </Link>
-            ))}
+          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 20 }}>
+              <Link href="/" style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Início</Link>
+              <Link href={slug ? `/blog/${slug}` : "/"} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Blog</Link>
+              {sections.slice(0, 4).map((s: string) => (
+                <Link key={s} href={`/blog/${slug}?section=${encodeURIComponent(s)}`} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>
+                  {s}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 

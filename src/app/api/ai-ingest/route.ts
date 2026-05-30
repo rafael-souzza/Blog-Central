@@ -4,7 +4,7 @@ import db from "../../../lib/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantSlug, title, content } = body;
+    const { tenantSlug, title, content, section } = body;
 
     if (!tenantSlug || !title || !content) {
       return NextResponse.json(
@@ -13,10 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantRow = await db
+    const tenant = await db
       .prepare("SELECT id FROM tenants WHERE slug = ?")
-      .get(tenantSlug);
-    const tenant = tenantRow as unknown as { id: number } | undefined;
+      .get(tenantSlug) as unknown as { id: number } | undefined;
 
     if (!tenant) {
       return NextResponse.json({ error: "Tenant não encontrado" }, { status: 404 });
@@ -28,9 +27,9 @@ export async function POST(request: NextRequest) {
       .replace(/^-|-$/g, "");
 
     const result = await db.prepare(`
-      INSERT INTO posts (tenant_id, title, slug, content, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, 'published', datetime('now'), datetime('now'))
-    `).run(tenant.id, title, slug, content);
+      INSERT INTO posts (tenant_id, title, slug, content, section, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 'published', datetime('now'), datetime('now'))
+    `).run(tenant.id, title, slug, content, section || null);
 
     const post = await db
       .prepare("SELECT * FROM posts WHERE id = ?")

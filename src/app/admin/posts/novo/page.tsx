@@ -10,6 +10,7 @@ export default function NovoPostPage() {
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [tenantSlug, setTenantSlug] = useState("");
+  const [section, setSection] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +28,13 @@ export default function NovoPostPage() {
     const res = await fetch("/api/ai-ingest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, tenantSlug, slug: slug || undefined }),
+      body: JSON.stringify({
+        title,
+        content,
+        tenantSlug,
+        slug: slug || undefined,
+        section: section || null,
+      }),
       credentials: "include",
     });
 
@@ -67,6 +74,18 @@ export default function NovoPostPage() {
             placeholder="slug-do-post"
           />
           <p className="text-xs text-gray-400 mt-1">Deixe em branco para gerar automaticamente do título.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Seção (opcional)</label>
+          <input
+            type="text"
+            value={section}
+            onChange={(e) => setSection(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            placeholder="Dicas, Eventos, Entrevistas..."
+          />
+          <p className="text-xs text-gray-400 mt-1">Vincule o post a uma seção do blog.</p>
         </div>
 
         <div>

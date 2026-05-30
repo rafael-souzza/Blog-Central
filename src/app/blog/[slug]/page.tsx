@@ -7,7 +7,7 @@ interface Tenant {
   slug: string;
   name: string;
   primary_color: string;
-  secondary_color: string;
+  sections: string;
 }
 
 interface Post {
@@ -15,20 +15,23 @@ interface Post {
   title: string;
   slug: string;
   content: string;
-  status: string;
+  section: string | null;
   created_at: string;
 }
 
 function stripHtml(html: string) {
-  return html.replace(/<[^>]*>/g, "").substring(0, 200);
+  return html.replace(/<[^>]*>/g, "").substring(0, 180);
 }
 
 export default async function BlogPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ section?: string }>;
 }) {
   const { slug } = await params;
+  const { section } = await searchParams;
 
   const tenantRow = await db
     .prepare("SELECT * FROM tenants WHERE slug = ?")
@@ -36,46 +39,93 @@ export default async function BlogPage({
   const tenant = tenantRow as unknown as Tenant | undefined;
   if (!tenant) return notFound();
 
-  const postsRows = await db
-    .prepare(
-      "SELECT id, title, slug, content, status, created_at FROM posts WHERE tenant_id = ? AND status = 'published' ORDER BY created_at DESC"
-    )
-    .all(tenant.id);
+  const primaryColor = tenant.primary_color || "#002b50";
+  const secondaryColor = "#fbcd39";
+
+  let postsRows: any[];
+  if (section) {
+    postsRows = await db
+      .prepare("SELECT id, title, slug, content, section, created_at FROM posts WHERE tenant_id = ? AND status = 'published' AND section = ? ORDER BY created_at DESC")
+      .all(tenant.id, section);
+  } else {
+    postsRows = await db
+      .prepare("SELECT id, title, slug, content, section, created_at FROM posts WHERE tenant_id = ? AND status = 'published' ORDER BY created_at DESC")
+      .all(tenant.id);
+  }
   const posts = postsRows as unknown as Post[];
 
-  const primaryColor = tenant.primary_color || "#3B82F6";
+  // Post em destaque (primeiro)
+  const featured = posts[0];
+  const rest = posts.slice(1);
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{tenant.name}</h1>
-        <p className="text-gray-500 mt-1">Blog</p>
-      </div>
+      {section && (
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: primaryColor, paddingBottom: 8, borderBottom: "2px solid " + secondaryColor }}>
+            {section}
+          </h1>
+        </div>
+      )}
 
       {posts.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-          <p className="text-gray-500">Nenhum post publicado ainda.</p>
+        <div style={{ textAlign: "center", padding: 48, backgroundColor: "#fff", borderRadius: 8, border: "1px solid #e0e0e0" }}>
+          <p style={{ color: "#666" }}>Nenhum post publicado ainda.</p>
         </div>
       ) : (
-        <div className="grid gap-6">
-          {posts.map((post) => (
-            <Link
-              key={post.id}
-              href={`/blog/${tenant.slug}/${post.slug}`}
-              className="block bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
-            >
-              <p className="text-sm text-gray-400 mb-1">
-                {new Date(post.created_at + "Z").toLocaleDateString("pt-BR")}
-              </p>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2 hover:underline" style={{ color: primaryColor }}>
-                {post.title}
-              </h2>
-              <p className="text-gray-500 leading-relaxed">
-                {stripHtml(post.content)}...
-              </p>
-            </Link>
-          ))}
-        </div>
+        <>
+          {/* Destaque */}
+          {featured && !section && (
+            <div style={{ marginBottom: 24 }}>
+              <Link href={`/blog/${tenant.slug}/${featured.slug}`} style={{ textDecoration: "none" }}>
+                <div style={{ backgroundColor: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e0e0e0" }}>
+                  <div style={{ padding: 24 }}>
+                    {featured.section && (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: secondaryColor, textTransform: "uppercase", marginBottom: 8, display: "inline-block" }}>
+                        {featured.section}
+                      </span>
+                    )}
+                    <h1 style={{ fontSize: 36, fontWeight: 700, color: primaryColor, margin: "8px 0" }}>
+                      {featured.title}
+                    </h1>
+                    <p style={{ fontSize: 16, color: "#444", lineHeight: 1.6, marginBottom: 12 }}>
+                      {stripHtml(featured.content)}...
+                    </p>
+                    <p style={{ fontSize: 13, color: "#999" }}>
+                      {new Date(featured.created_at + "Z").toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          {/* Grid de posts */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            {(section ? posts : rest).map((post) => (
+              <Link key={post.id} href={`/blog/${tenant.slug}/${post.slug}`} style={{ textDecoration: "none" }}>
+                <div style={{ backgroundColor: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e0e0e0", height: "100%" }}>
+                  <div style={{ padding: 20 }}>
+                    {post.section && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: secondaryColor, textTransform: "uppercase" }}>
+                        {post.section}
+                      </span>
+                    )}
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: primaryColor, margin: "8px 0" }}>
+                      {post.title}
+                    </h2>
+                    <p style={{ fontSize: 14, color: "#444", lineHeight: 1.5 }}>
+                      {stripHtml(post.content)}...
+                    </p>
+                    <p style={{ fontSize: 12, color: "#999", marginTop: 12 }}>
+                      {new Date(post.created_at + "Z").toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

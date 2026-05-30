@@ -6,9 +6,8 @@ const client = createClient({
 });
 
 async function main() {
-  await client.execute('ALTER TABLE tenants ADD COLUMN logo_url TEXT DEFAULT NULL');
-  await client.execute('ALTER TABLE tenants ADD COLUMN font_family TEXT DEFAULT NULL');
-  console.log('Colunas adicionadas com sucesso.');
+  await client.execute('ALTER TABLE posts ADD COLUMN section TEXT DEFAULT NULL');
+  console.log('Coluna section adicionada com sucesso.');
 }
 
 main();

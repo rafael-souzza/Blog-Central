@@ -3,17 +3,14 @@ import { notFound } from "next/navigation";
 import db from "../../../../lib/db";
 
 interface Tenant {
-  id: number;
   name: string;
   primary_color: string;
 }
 
 interface Post {
-  id: number;
   title: string;
-  slug: string;
   content: string;
-  status: string;
+  section: string | null;
   created_at: string;
 }
 
@@ -25,42 +22,67 @@ export default async function PostPage({
   const { slug, postSlug } = await params;
 
   const tenantRow = await db
-    .prepare("SELECT id, name, primary_color FROM tenants WHERE slug = ?")
+    .prepare("SELECT name, primary_color FROM tenants WHERE slug = ?")
     .get(slug);
   const tenant = tenantRow as unknown as Tenant | undefined;
   if (!tenant) return notFound();
 
   const postRow = await db
-    .prepare("SELECT * FROM posts WHERE tenant_id = ? AND slug = ? AND status = 'published'")
-    .get(tenant.id, postSlug);
+    .prepare("SELECT * FROM posts WHERE tenant_id = (SELECT id FROM tenants WHERE slug = ?) AND slug = ? AND status = 'published'")
+    .get(slug, postSlug);
   const post = postRow as unknown as Post | undefined;
   if (!post) return notFound();
 
+  const primaryColor = tenant.primary_color || "#002b50";
+  const secondaryColor = "#fbcd39";
+
+  // Buscar posts relacionados da mesma seção
+  let relatedPosts: any[] = [];
+  if (post.section) {
+    const rows = await db
+      .prepare("SELECT title, slug FROM posts WHERE tenant_id = (SELECT id FROM tenants WHERE slug = ?) AND section = ? AND slug != ? AND status = 'published' LIMIT 3")
+      .all(slug, post.section, postSlug);
+    relatedPosts = rows as any[];
+  }
+
   return (
     <article>
-      <Link
-        href={`/blog/${slug}`}
-        className="text-blue-600 hover:underline text-sm mb-4 inline-block"
-      >
+      <Link href={`/blog/${slug}`} style={{ fontSize: 14, color: primaryColor, textDecoration: "none" }}>
         ← Voltar para {tenant.name}
       </Link>
 
-      <p className="text-sm text-gray-400 mb-2">
-        {new Date(post.created_at + "Z").toLocaleDateString("pt-BR", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-      </p>
+      {post.section && (
+        <span style={{ display: "inline-block", marginTop: 16, fontSize: 12, fontWeight: 700, color: secondaryColor, textTransform: "uppercase" }}>
+          {post.section}
+        </span>
+      )}
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-6" style={{ color: tenant.primary_color || "#3B82F6" }}>
+      <h1 style={{ fontSize: 36, fontWeight: 700, color: primaryColor, margin: "12px 0" }}>
         {post.title}
       </h1>
 
-      <div
-        className="prose max-w-none text-gray-700 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+      <p style={{ fontSize: 13, color: "#999", marginBottom: 24 }}>
+        {new Date(post.created_at + "Z").toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
+      </p>
+
+      <div style={{ fontSize: 16, lineHeight: 1.6, color: "#333" }} dangerouslySetInnerHTML={{ __html: post.content }} />
+
+      {relatedPosts.length > 0 && (
+        <div style={{ marginTop: 40, paddingTop: 24, borderTop: "1px solid #e0e0e0" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: primaryColor, marginBottom: 16 }}>
+            Posts relacionados
+          </h3>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {relatedPosts.map((rp: any) => (
+              <li key={rp.slug} style={{ marginBottom: 8 }}>
+                <Link href={`/blog/${slug}/${rp.slug}`} style={{ fontSize: 14, color: primaryColor, textDecoration: "none" }}>
+                  {rp.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </article>
   );
 }

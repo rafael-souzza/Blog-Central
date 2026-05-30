@@ -34,7 +34,6 @@ export default async function BlogLayout({
   const fontFamily = tenant?.font_family || "Roboto Slab";
   const sections: string[] = tenant?.sections ? JSON.parse(tenant.sections) : [];
 
-  // Buscar posts recentes para a sidebar
   let recentPosts: any[] = [];
   if (tenant) {
     const tenantRow = await db.prepare("SELECT id FROM tenants WHERE slug = ?").get(slug!) as any;
@@ -53,49 +52,75 @@ export default async function BlogLayout({
           href={`https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, "+")}:wght@300;400;700&display=swap`}
           rel="stylesheet"
         />
+        <style>{`
+          * { box-sizing: border-box; }
+          body { margin: 0; }
+          .hamburger { display: none; }
+          @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .desktop-nav { display: none !important; }
+            .mobile-nav { display: none; }
+            .mobile-nav.open { display: flex; flex-direction: column; }
+            .main-layout { flex-direction: column !important; }
+            .sidebar { width: 100% !important; min-width: 100% !important; }
+          }
+        `}</style>
       </head>
       <body style={{ fontFamily, backgroundColor: "#f5f5f5", margin: 0 }}>
-        {/* Top Bar */}
-        <div style={{ backgroundColor: "#f0f0f0", borderBottom: "1px solid #ddd" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 20 }}>
-              <Link href="/" style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Início</Link>
-              <Link href={slug ? `/blog/${slug}` : "/"} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Blog</Link>
-              {sections.slice(0, 4).map((s: string) => (
-                <Link key={s} href={`/blog/${slug}?section=${encodeURIComponent(s)}`} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>
+        {/* Header */}
+        <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #ddd" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Link href={`/blog/${slug}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
+              {logoUrl ? (
+                <img src={logoUrl} alt={tenant?.name || "Blog"} style={{ height: 40 }} />
+              ) : (
+                <span style={{ fontSize: 22, fontWeight: 700, color: primaryColor }}>{tenant?.name || "Blog"}</span>
+              )}
+            </Link>
+
+            {/* Desktop Nav */}
+            <nav className="desktop-nav" style={{ display: "flex", gap: 8 }}>
+              {sections.map((s: string) => (
+                <Link
+                  key={s}
+                  href={`/blog/${slug}?section=${encodeURIComponent(s)}`}
+                  style={{ padding: "8px 14px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none", textTransform: "uppercase", borderRadius: 4 }}
+                >
                   {s}
                 </Link>
               ))}
-            </div>
+            </nav>
+
+            {/* Hamburger Mobile */}
+            <button
+              className="hamburger"
+              onClick={() => {
+                const nav = document.getElementById('mobile-nav');
+                if (nav) nav.classList.toggle('open');
+              }}
+              style={{ background: "none", border: "none", fontSize: 28, cursor: "pointer", color: primaryColor }}
+            >
+              ☰
+            </button>
+          </div>
+
+          {/* Mobile Nav */}
+          <div id="mobile-nav" className="mobile-nav" style={{ backgroundColor: "#fff", padding: "0 10px 12px" }}>
+            {sections.map((s: string) => (
+              <Link
+                key={s}
+                href={`/blog/${slug}?section=${encodeURIComponent(s)}`}
+                style={{ padding: "10px 14px", fontSize: 14, fontWeight: 700, color: "#000", textDecoration: "none", display: "block" }}
+              >
+                {s}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Middle Bar */}
-        <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #ddd" }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Link href={slug ? `/blog/${slug}` : "/"} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
-              {logoUrl ? (
-                <img src={logoUrl} alt={tenant?.name || "Blog"} style={{ height: 48 }} />
-              ) : (
-                <span style={{ fontSize: 24, fontWeight: 700, color: primaryColor }}>{tenant?.name || "Blog Central"}</span>
-              )}
-            </Link>
-            <div style={{ display: "flex", gap: 4 }}>
-              <input
-                type="text"
-                placeholder="Buscar..."
-                style={{ padding: "8px 12px", border: "1px solid #ccc", borderRadius: "4px 0 0 4px", fontSize: 14, width: 200 }}
-              />
-              <button style={{ padding: "8px 16px", backgroundColor: primaryColor, color: "#fff", border: "none", borderRadius: "0 4px 4px 0", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                BUSCAR
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Navbar de categorias */}
-        <nav style={{ backgroundColor: "#fff", borderBottom: "3px solid " + secondaryColor }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 10px", display: "flex", gap: 0 }}>
+        {/* Navbar de categorias (desktop) */}
+        <nav className="desktop-nav" style={{ backgroundColor: "#fff", borderBottom: "3px solid " + secondaryColor }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 10px", display: "flex" }}>
             {sections.length > 0 ? sections.map((s: string) => (
               <Link
                 key={s}
@@ -105,15 +130,15 @@ export default async function BlogLayout({
                 {s}
               </Link>
             )) : (
-              <Link href={slug ? `/blog/${slug}` : "/"} style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none" }}>Home</Link>
+              <span style={{ padding: "12px 16px", fontSize: 13, color: "#666" }}>Nenhuma seção definida</span>
             )}
           </div>
         </nav>
 
         {/* Conteúdo principal */}
-        <div style={{ maxWidth: 1280, margin: "24px auto", padding: "0 10px", display: "flex", gap: 24, alignItems: "flex-start" }}>
-          {/* Sidebar */}
-          <aside style={{ width: 315, minWidth: 315, backgroundColor: "#fff", borderRadius: 8, padding: 20, border: "1px solid #e0e0e0" }}>
+        <div className="main-layout" style={{ maxWidth: 1280, margin: "24px auto", padding: "0 10px", display: "flex", gap: 24, alignItems: "flex-start" }}>
+          {/* Sidebar - SEMPRE visível */}
+          <aside className="sidebar" style={{ width: 315, minWidth: 315, backgroundColor: "#fff", borderRadius: 8, padding: 20, border: "1px solid #e0e0e0", position: "sticky", top: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: primaryColor, marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid " + secondaryColor }}>
               Destaques
             </h3>
@@ -143,7 +168,7 @@ export default async function BlogLayout({
                   {sections.map((s: string) => (
                     <li key={s} style={{ marginBottom: 8 }}>
                       <Link href={`/blog/${slug}?section=${encodeURIComponent(s)}`} style={{ fontSize: 14, color: "#000", textDecoration: "none" }}>
-                        {s}
+                        ▸ {s}
                       </Link>
                     </li>
                   ))}
@@ -170,11 +195,6 @@ export default async function BlogLayout({
               )) : (
                 <p style={{ fontSize: 14 }}>Nenhuma seção definida.</p>
               )}
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Institucional</h4>
-              <p style={{ margin: "4px 0" }}><Link href="/" style={{ color: "#fff", fontSize: 14, textDecoration: "none" }}>Início</Link></p>
-              <p style={{ margin: "4px 0" }}><Link href={slug ? `/blog/${slug}` : "/"} style={{ color: "#fff", fontSize: 14, textDecoration: "none" }}>Blog</Link></p>
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Redes Sociais</h4>

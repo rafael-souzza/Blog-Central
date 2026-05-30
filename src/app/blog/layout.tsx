@@ -56,12 +56,7 @@ export default async function BlogLayout({
         <style>{`
           * { box-sizing: border-box; }
           body { margin: 0; }
-          .hamburger { display: none; }
           @media (max-width: 768px) {
-            .hamburger { display: block; }
-            .desktop-nav { display: none !important; }
-            .mobile-nav { display: none; }
-            .mobile-nav.open { display: flex; flex-direction: column; }
             .main-layout { flex-direction: column !important; }
             .sidebar { width: 100% !important; min-width: 100% !important; }
           }
@@ -79,43 +74,13 @@ export default async function BlogLayout({
               )}
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="desktop-nav" style={{ display: "flex", gap: 8 }}>
-              {sections.map((s: string) => (
-                <Link
-                  key={s}
-                  href={`/blog/${slug}?section=${encodeURIComponent(s)}`}
-                  style={{ padding: "8px 14px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none", textTransform: "uppercase", borderRadius: 4 }}
-                >
-                  {s}
-                </Link>
-              ))}
-            </nav>
-
             <MobileNav slug={slug!} sections={sections} />
           </div>
         </div>
 
-        {/* Navbar de categorias (desktop) */}
-        <nav className="desktop-nav" style={{ backgroundColor: "#fff", borderBottom: "3px solid " + secondaryColor }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 10px", display: "flex" }}>
-            {sections.length > 0 ? sections.map((s: string) => (
-              <Link
-                key={s}
-                href={`/blog/${slug}?section=${encodeURIComponent(s)}`}
-                style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none", textTransform: "uppercase", borderBottom: "3px solid transparent" }}
-              >
-                {s}
-              </Link>
-            )) : (
-              <span style={{ padding: "12px 16px", fontSize: 13, color: "#666" }}>Nenhuma seção definida</span>
-            )}
-          </div>
-        </nav>
-
         {/* Conteúdo principal */}
         <div className="main-layout" style={{ maxWidth: 1280, margin: "24px auto", padding: "0 10px", display: "flex", gap: 24, alignItems: "flex-start" }}>
-          {/* Sidebar - SEMPRE visível */}
+          {/* Sidebar */}
           <aside className="sidebar" style={{ width: 315, minWidth: 315, backgroundColor: "#fff", borderRadius: 8, padding: 20, border: "1px solid #e0e0e0", position: "sticky", top: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: primaryColor, marginBottom: 16, paddingBottom: 8, borderBottom: "2px solid " + secondaryColor }}>
               Destaques

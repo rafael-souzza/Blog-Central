@@ -12,6 +12,7 @@ export default function NovoTenantPage() {
   const [secondaryColor, setSecondaryColor] = useState("#1E3A5F");
   const [logoUrl, setLogoUrl] = useState("");
   const [fontFamily, setFontFamily] = useState("");
+  const [sections, setSections] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,12 @@ export default function NovoTenantPage() {
       return;
     }
 
+    // Converte seções separadas por vírgula em array JSON
+    const sectionsArray = sections
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
     const res = await fetch("/api/tenants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -36,6 +43,7 @@ export default function NovoTenantPage() {
         secondary_color: secondaryColor,
         logo_url: logoUrl || null,
         font_family: fontFamily || null,
+        sections: JSON.stringify(sectionsArray),
       }),
       credentials: "include",
     });
@@ -76,6 +84,18 @@ export default function NovoTenantPage() {
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="meu-blog"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Seções (separadas por vírgula)</label>
+          <input
+            type="text"
+            value={sections}
+            onChange={(e) => setSections(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="Dicas, Eventos, Entrevistas"
+          />
+          <p className="text-xs text-gray-400 mt-1">Ex: Dicas, Eventos, Entrevistas. Aparecerão no menu e sidebar do blog.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

@@ -2,17 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import db from "../../../../lib/db";
 
+interface Tenant {
+  id: number;
+  name: string;
+  primary_color: string;
+}
+
 interface Post {
   id: number;
-  tenant_id: number;
   title: string;
   slug: string;
   content: string;
-  image_url: string | null;
-  category: string;
   status: string;
   created_at: string;
-  updated_at: string;
 }
 
 export default async function PostPage({
@@ -23,9 +25,9 @@ export default async function PostPage({
   const { slug, postSlug } = await params;
 
   const tenantRow = await db
-    .prepare("SELECT id, name FROM tenants WHERE slug = ?")
+    .prepare("SELECT id, name, primary_color FROM tenants WHERE slug = ?")
     .get(slug);
-  const tenant = tenantRow as unknown as { id: number; name: string } | undefined;
+  const tenant = tenantRow as unknown as Tenant | undefined;
   if (!tenant) return notFound();
 
   const postRow = await db
@@ -51,7 +53,9 @@ export default async function PostPage({
         })}
       </p>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">{post.title}</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6" style={{ color: tenant.primary_color || "#3B82F6" }}>
+        {post.title}
+      </h1>
 
       <div
         className="prose max-w-none text-gray-700 leading-relaxed"

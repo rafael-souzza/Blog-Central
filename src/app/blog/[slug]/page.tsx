@@ -43,6 +43,8 @@ export default async function BlogPage({
     .all(tenant.id);
   const posts = postsRows as unknown as Post[];
 
+  const primaryColor = tenant.primary_color || "#3B82F6";
+
   return (
     <div>
       <div className="mb-8">
@@ -65,7 +67,7 @@ export default async function BlogPage({
               <p className="text-sm text-gray-400 mb-1">
                 {new Date(post.created_at + "Z").toLocaleDateString("pt-BR")}
               </p>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2 hover:underline" style={{ color: primaryColor }}>
                 {post.title}
               </h2>
               <p className="text-gray-500 leading-relaxed">

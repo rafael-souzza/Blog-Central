@@ -8,6 +8,10 @@ export default function NovoTenantPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#3B82F6");
+  const [secondaryColor, setSecondaryColor] = useState("#1E3A5F");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [fontFamily, setFontFamily] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +29,14 @@ export default function NovoTenantPage() {
     const res = await fetch("/api/tenants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug }),
+      body: JSON.stringify({
+        name,
+        slug,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+        logo_url: logoUrl || null,
+        font_family: fontFamily || null,
+      }),
       credentials: "include",
     });
 
@@ -51,7 +62,7 @@ export default function NovoTenantPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="Meu Blog de Economia"
+            placeholder="Meu Blog"
           />
         </div>
 
@@ -63,11 +74,68 @@ export default function NovoTenantPage() {
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="meu-blog-de-economia"
+            placeholder="meu-blog"
           />
-          <p className="text-xs text-gray-400 mt-1">
-            O blog ficará em: /blog/{slug || "meu-blog-de-economia"}
-          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cor Principal</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="w-10 h-10 rounded border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cor Secundária</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={secondaryColor}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="w-10 h-10 rounded border cursor-pointer"
+              />
+              <input
+                type="text"
+                value={secondaryColor}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">URL do Logo (opcional)</label>
+          <input
+            type="text"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="https://exemplo.com/logo.svg"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fonte (Google Fonts, opcional)</label>
+          <input
+            type="text"
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="Roboto Slab"
+          />
+          <p className="text-xs text-gray-400 mt-1">Deixe em branco para usar a fonte padrão.</p>
         </div>
 
         {error && (

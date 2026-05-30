@@ -1,5 +1,6 @@
 import Link from "next/link";
 import db from "../../lib/db";
+import MobileNav from "./MobileNav";
 
 interface Tenant {
   name: string;
@@ -91,30 +92,7 @@ export default async function BlogLayout({
               ))}
             </nav>
 
-            {/* Hamburger Mobile */}
-            <button
-              className="hamburger"
-              onClick={() => {
-                const nav = document.getElementById('mobile-nav');
-                if (nav) nav.classList.toggle('open');
-              }}
-              style={{ background: "none", border: "none", fontSize: 28, cursor: "pointer", color: primaryColor }}
-            >
-              ☰
-            </button>
-          </div>
-
-          {/* Mobile Nav */}
-          <div id="mobile-nav" className="mobile-nav" style={{ backgroundColor: "#fff", padding: "0 10px 12px" }}>
-            {sections.map((s: string) => (
-              <Link
-                key={s}
-                href={`/blog/${slug}?section=${encodeURIComponent(s)}`}
-                style={{ padding: "10px 14px", fontSize: 14, fontWeight: 700, color: "#000", textDecoration: "none", display: "block" }}
-              >
-                {s}
-              </Link>
-            ))}
+            <MobileNav slug={slug!} sections={sections} />
           </div>
         </div>
 

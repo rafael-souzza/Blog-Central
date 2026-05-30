@@ -59,7 +59,7 @@ export default async function BlogLayout({
         <div style={{ backgroundColor: "#f0f0f0", borderBottom: "1px solid #ddd" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 10px", display: "flex", justifyContent: "flex-end", gap: 20 }}>
             <Link href="/" style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Início</Link>
-            <Link href={`/blog/${slug}`} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Blog</Link>
+            <Link href={slug ? `/blog/${slug}` : "/"} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>Blog</Link>
             {sections.map((s: string) => (
               <Link key={s} href={`/blog/${slug}?section=${encodeURIComponent(s)}`} style={{ fontSize: 13, color: "#000", textDecoration: "none" }}>
                 {s}
@@ -71,7 +71,7 @@ export default async function BlogLayout({
         {/* Middle Bar */}
         <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #ddd" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto", padding: "16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Link href={`/blog/${slug}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
+            <Link href={slug ? `/blog/${slug}` : "/"} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
               {logoUrl ? (
                 <img src={logoUrl} alt={tenant?.name || "Blog"} style={{ height: 48 }} />
               ) : (
@@ -103,7 +103,7 @@ export default async function BlogLayout({
                 {s}
               </Link>
             )) : (
-              <Link href={`/blog/${slug}`} style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none" }}>Home</Link>
+              <Link href={slug ? `/blog/${slug}` : "/"} style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none" }}>Home</Link>
             )}
           </div>
         </nav>
@@ -172,7 +172,7 @@ export default async function BlogLayout({
             <div style={{ flex: 1, minWidth: 200 }}>
               <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Institucional</h4>
               <p style={{ margin: "4px 0" }}><Link href="/" style={{ color: "#fff", fontSize: 14, textDecoration: "none" }}>Início</Link></p>
-              <p style={{ margin: "4px 0" }}><Link href={`/blog/${slug}`} style={{ color: "#fff", fontSize: 14, textDecoration: "none" }}>Blog</Link></p>
+              <p style={{ margin: "4px 0" }}><Link href={slug ? `/blog/${slug}` : "/"} style={{ color: "#fff", fontSize: 14, textDecoration: "none" }}>Blog</Link></p>
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Redes Sociais</h4>
